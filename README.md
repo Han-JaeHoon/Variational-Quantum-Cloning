@@ -13,6 +13,58 @@ The goal is to compare cloning fidelities for phase-covariant input states.
 
 ---
 
+# Installation
+
+Create virtual environment:
+
+```bash
+python -m venv venv
+source venv/bin/activate  # macOS/Linux
+```
+
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+# 🚀 Running Experiments
+
+## 1️⃣ Variational Circuit (B)
+
+```bash
+python main.py --circuit B --layers 1
+```
+
+Optional:
+```bash
+--layers N
+```
+
+Controls number of ansatz layers.
+
+---
+
+## 2️⃣ Fixed Circuit C
+
+```bash
+python main.py --circuit C
+```
+
+No training is performed.
+
+---
+
+## 3️⃣ Fixed Circuit D
+
+```bash
+python main.py --circuit D
+```
+
+
+---
+
 # 📂 Project Structure
 ```
 .
@@ -145,57 +197,6 @@ Handles training loop:
 - Training curve plotting
 
 Skipped automatically for fixed circuits.
-
----
-
-# Installation
-
-Create virtual environment:
-
-```bash
-python -m venv venv
-source venv/bin/activate  # macOS/Linux
-```
-
-Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
----
-
-# 🚀 Running Experiments
-
-## 1️⃣ Variational Circuit (B)
-
-```bash
-python main.py --circuit B --layers 1
-```
-
-Optional:
-```bash
---layers N
-```
-
-Controls number of ansatz layers.
-
----
-
-## 2️⃣ Fixed Circuit C
-
-```bash
-python main.py --circuit C
-```
-
-No training is performed.
-
----
-
-## 3️⃣ Fixed Circuit D
-
-```bash
-python main.py --circuit D
-```
 
 ---
 
