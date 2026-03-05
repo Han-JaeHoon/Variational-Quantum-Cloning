@@ -1,46 +1,36 @@
 # circuits/base.py
 
-import pennylane as qml
-import torch
-import numpy as np
+from abc import ABC, abstractmethod
 
-class BaseCircuit:
 
-    def __init__(self, n_layers):
-        self.n_layers = n_layers
-        self.dev = qml.device("default.qubit", wires=3)
-        self.qnode = self._build_qnode()
+class BaseCircuit(ABC):
+    """
+    Abstract base class for all quantum cloning circuits.
 
-    def _build_qnode(self):
+    All circuit implementations (B, C, D, MBQC, etc.) must:
+        - define whether they are trainable
+        - implement fidelity(eta, params=None)
+    """
 
-        @qml.qnode(self.dev, interface="torch", diff_method="parameter-shift")
-        def circuit(params, eta):
+    @property
+    @abstractmethod
+    def trainable(self):
+        """
+        Returns:
+            bool: True if the circuit has learnable parameters
+        """
+        pass
 
-            # Input
-            qml.Hadamard(wires=0)
-            qml.RZ(eta, wires=0)
+    @abstractmethod
+    def fidelity(self, eta, params=None):
+        """
+        Compute fidelities (F_B, F_E) for given phase eta.
 
-            self._ansatz(params)
+        Args:
+            eta (torch.Tensor): phase parameter
+            params (torch.Tensor or None): trainable parameters if applicable
 
-            # Cloning block
-            qml.CNOT(wires=[0,1])
-            qml.CNOT(wires=[0,2])
-            qml.CNOT(wires=[1,0])
-            qml.CNOT(wires=[2,0])
-
-            psi = torch.stack([
-                torch.tensor(1/np.sqrt(2), dtype=torch.cdouble),
-                torch.exp(1j*eta)/np.sqrt(2)
-            ])
-
-            projector = torch.outer(psi, torch.conj(psi))
-
-            F_B = qml.expval(qml.Hermitian(projector, wires=1))
-            F_E = qml.expval(qml.Hermitian(projector, wires=2))
-
-            return F_B, F_E
-
-        return circuit
-
-    def _ansatz(self, params):
-        raise NotImplementedError
+        Returns:
+            tuple: (F_B, F_E)
+        """
+        pass
