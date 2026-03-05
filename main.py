@@ -1,18 +1,19 @@
 """
 main.py
 
-Entry point for the variational quantum cloning experiment.
+Command-line controlled entry point for
+Variational Quantum Cloning experiment.
 
-Pipeline:
+Usage examples:
 
-    1. Generate phase dataset
-    2. Select cloning circuit (trainable or fixed)
-    3. Wrap circuit with PyTorch model
-    4. Train (if applicable)
-    5. Perform fixed 10-point analysis
-
-This file controls high-level experiment configuration.
+    python main.py --circuit B --layers 2
+    python main.py --circuit C
+    python main.py --circuit D
 """
+
+import argparse
+import torch
+import numpy as np
 
 from circuits.circuit_b import CircuitB
 from circuits.circuit_c import CircuitC
@@ -20,76 +21,89 @@ from circuits.circuit_d import CircuitD
 from models.variational_cloner import VariationalCloner
 from data.phase_covariant_dataset import PhaseCovariantDataset
 from trainer.trainer import Trainer
-import torch
-import numpy as np
 
 
 # ------------------------------------------------------------
-# 1. Dataset generation
+# 1. Argument parsing
 # ------------------------------------------------------------
-# Randomly samples phase parameters η ∈ [0, 2π)
-# Used only for training/validation (NOT the fixed test below)
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument(
+    "--circuit",
+    type=str,
+    required=True,
+    choices=["B", "C", "D"],
+    help="Choose cloning circuit: B (variational), C, or D"
+)
+
+parser.add_argument(
+    "--layers",
+    type=int,
+    default=1,
+    help="Number of ansatz layers (only used for CircuitB)"
+)
+
+args = parser.parse_args()
+
+
+# ------------------------------------------------------------
+# 2. Dataset
+# ------------------------------------------------------------
+
 dataset = PhaseCovariantDataset()
 
 
 # ------------------------------------------------------------
-# 2. Circuit selection
+# 3. Circuit selection
 # ------------------------------------------------------------
-# Choose which cloning circuit to run:
-#
-#   CircuitB → trainable variational circuit
-#   CircuitC → fixed analytic circuit (no training)
-#
-# For CircuitB, you can control model capacity via n_layers.
-#
-circuit = CircuitB(n_layers=1)
-# circuit = CircuitC()
-# circuit = CircuitD()
+
+if args.circuit == "B":
+    circuit = CircuitB(n_layers=args.layers)
+elif args.circuit == "C":
+    circuit = CircuitC()
+elif args.circuit == "D":
+    circuit = CircuitD()
+
+
+print(f"\nSelected circuit: {args.circuit}")
 
 
 # ------------------------------------------------------------
-# 3. Wrap circuit as PyTorch model
+# 4. Model
 # ------------------------------------------------------------
-# This creates trainable parameters if the circuit is variational.
+
 model = VariationalCloner(circuit)
 
 
 # ------------------------------------------------------------
-# 4. Trainer setup
+# 5. Trainer
 # ------------------------------------------------------------
+
 trainer = Trainer(model, dataset)
 
 
 # ------------------------------------------------------------
-# 5. Training phase
+# 6. Plot structure (once)
 # ------------------------------------------------------------
-# 회로 구조 확인 (한 번만 실행)
+
 circuit.plot_circuit()
-# If circuit is trainable:
-#     → performs gradient descent
-# If not trainable:
-#     → automatically skipped
+
+
+# ------------------------------------------------------------
+# 7. Training (if trainable)
+# ------------------------------------------------------------
+
 trainer.train()
 
 
 # ------------------------------------------------------------
-# 6. Fixed 10-point evaluation
+# 8. Fixed 10-point evaluation
 # ------------------------------------------------------------
-# These test phases are evenly spaced in [0, 2π].
-# IMPORTANT:
-#   - These are NOT part of training.
-#   - They are used only for post-training inspection.
-#
-# This ensures reproducibility and fair comparison
-# between CircuitB and CircuitC.
-#
+
 test_etas = torch.linspace(0, 2*np.pi, 10)
 
-
-# Perform detailed state analysis
 if circuit.trainable:
-    # Variational circuit requires trained parameters
     circuit.analyze_states(test_etas, model.params)
 else:
-    # Fixed circuit requires no parameters
     circuit.analyze_states(test_etas)
