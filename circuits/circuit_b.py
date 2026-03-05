@@ -112,6 +112,7 @@ class CircuitB(BaseCircuit):
         """
         qml.Hadamard(wires=0)
         qml.RZ(eta, wires=0)
+        qml.Barrier()
 
     def _ansatz(self, params):
         """
@@ -166,6 +167,36 @@ class CircuitB(BaseCircuit):
         F_E = qml.expval(qml.Hermitian(projector, wires=2))
 
         return F_B, F_E
+
+    # ------------------------------------------------------------------
+    # Visualization
+    # ------------------------------------------------------------------
+
+    def plot_circuit(self):
+        """
+        Plot the full quantum circuit structure (one example instance).
+
+        Uses:
+            - Dummy parameters
+            - Dummy eta
+        This is for structural verification only.
+        """
+
+        # Dummy inputs (just for visualization)
+        dummy_params = torch.zeros(
+            self.n_layers,
+            self.n_params_per_layer
+        )
+        dummy_eta = torch.tensor(0.0)
+
+        # Use PennyLane's matplotlib drawer
+        fig, ax = qml.draw_mpl(self.fid_qnode)(
+            dummy_params,
+            dummy_eta
+        )
+
+        ax.set_title("CircuitB Structure")
+        fig.show()
 
     # ------------------------------------------------------------------
     # Public API

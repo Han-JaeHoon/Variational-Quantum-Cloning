@@ -16,6 +16,7 @@ This file controls high-level experiment configuration.
 
 from circuits.circuit_b import CircuitB
 from circuits.circuit_c import CircuitC
+from circuits.circuit_d import CircuitD
 from models.variational_cloner import VariationalCloner
 from data.phase_covariant_dataset import PhaseCovariantDataset
 from trainer.trainer import Trainer
@@ -41,8 +42,9 @@ dataset = PhaseCovariantDataset()
 #
 # For CircuitB, you can control model capacity via n_layers.
 #
-# circuit = CircuitB(n_layers=1)
-circuit = CircuitC()
+circuit = CircuitB(n_layers=1)
+# circuit = CircuitC()
+# circuit = CircuitD()
 
 
 # ------------------------------------------------------------
@@ -61,6 +63,8 @@ trainer = Trainer(model, dataset)
 # ------------------------------------------------------------
 # 5. Training phase
 # ------------------------------------------------------------
+# 회로 구조 확인 (한 번만 실행)
+circuit.plot_circuit()
 # If circuit is trainable:
 #     → performs gradient descent
 # If not trainable:

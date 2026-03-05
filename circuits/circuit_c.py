@@ -18,6 +18,7 @@ comparison with the variational CircuitB.
 import pennylane as qml
 import torch
 import numpy as np
+import matplotlib.pyplot as plt
 
 from circuits.base import BaseCircuit
 
@@ -71,6 +72,7 @@ class CircuitC(BaseCircuit):
         """
         qml.Hadamard(wires=0)
         qml.RZ(eta, wires=0)
+        qml.Barrier()
 
     def _fixed_circuit(self):
         """
@@ -114,7 +116,6 @@ class CircuitC(BaseCircuit):
         qml.RY(3*np.pi/2, wires=1)
 
         qml.CZ(wires=[0,1])
-        
 
     # ------------------------------------------------------------
     # QNodes
@@ -177,6 +178,27 @@ class CircuitC(BaseCircuit):
             return qml.state()
 
         return circuit
+
+    # ------------------------------------------------------------
+    # Visualization
+    # ------------------------------------------------------------
+
+    def plot_circuit(self):
+        """
+        Plot the full fixed cloning circuit structure.
+        Uses dummy eta for visualization only.
+        """
+
+        # dummy_eta = torch.tensor(0.0)
+        dummy_eta = torch.tensor(0.0, requires_grad=False)
+
+        fig, ax = qml.draw_mpl(self.fid_qnode)(dummy_eta)
+
+        ax.set_title("CircuitC Structure")
+        # fig.show() # Use plt.show() instead for better control in Jupyter
+        plt.show()
+
+        print(qml.draw(self.fid_qnode)(dummy_eta))
 
     # ------------------------------------------------------------
     # Public API
