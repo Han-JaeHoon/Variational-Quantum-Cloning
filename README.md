@@ -1,7 +1,7 @@
 # Variational Quantum Cloning
 
-Implementation of variational and analytic quantum cloning circuits  
-using PennyLane + PyTorch. (Ref : https://journals.aps.org/pra/abstract/10.1103/PhysRevA.105.042604)
+Implementation of variational and analytic quantum cloning circuits   using PennyLane + PyTorch. \
+(Ref : https://journals.aps.org/pra/abstract/10.1103/PhysRevA.105.042604)
 
 This project reproduces and compares three cloning circuit architectures:
 
