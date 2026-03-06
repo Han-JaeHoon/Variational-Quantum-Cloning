@@ -96,13 +96,13 @@ class CircuitC(BaseCircuit):
         qml.RZ(14*np.pi/8, wires=2)
 
         qml.RX(11*np.pi/16, wires=1)
-        qml.RY(13*np.pi/8, wires=2)
+        qml.RX(13*np.pi/8, wires=2)
 
         qml.CZ(wires=[0,2])
 
         qml.RX(3*np.pi/2, wires=0)
         qml.RZ(np.pi, wires=1)
-        qml.RY(93*np.pi/16, wires=2)
+        qml.RY(9*np.pi/16, wires=2)
 
         qml.RZ(np.pi, wires=0)
         qml.RZ(3*np.pi/4, wires=2)
