@@ -1,7 +1,7 @@
 # Variational Quantum Cloning
 
 Implementation of variational and analytic quantum cloning circuits  
-using PennyLane + PyTorch.
+using PennyLane + PyTorch. (Ref : https://journals.aps.org/pra/abstract/10.1103/PhysRevA.105.042604)
 
 This project reproduces and compares three cloning circuit architectures:
 
@@ -14,6 +14,12 @@ The goal is to compare cloning fidelities for phase-covariant input states.
 ---
 
 # Installation
+Clone this repository on your computer:
+```bash
+git clone https://github.com/Han-JaeHoon/Variational-Quantum-Cloning.git
+cd ./Variational-Quantum-Cloning
+```
+
 
 Create virtual environment:
 
