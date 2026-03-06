@@ -105,5 +105,7 @@ test_etas = torch.linspace(0, 2*np.pi, 10)
 
 if circuit.trainable:
     circuit.analyze_states(test_etas, model.params)
+    trainer.plot_test_fidelities(circuit, test_etas, model.params)
 else:
     circuit.analyze_states(test_etas)
+    trainer.plot_test_fidelities(circuit, test_etas)
