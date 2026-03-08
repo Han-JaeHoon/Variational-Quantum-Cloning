@@ -249,13 +249,3 @@ $$ F = \langle \psi | \rho_{clone} | \psi \rangle $$
 using projector measurement.
 
 ---
-
-# 🏗 Future Extensions
-
-- Automatic multi-circuit comparison
-- Fidelity vs phase plots
-- Hyperparameter sweep
-- Noise model support
-- Export circuits to LaTeX (quantikz)
-
----
