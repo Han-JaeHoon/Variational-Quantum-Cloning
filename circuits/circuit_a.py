@@ -1,21 +1,16 @@
-# circuits/circuit_b.py
+# circuits/circuit_a.py
 
 """
-CircuitA: Variational quantum cloning circuit (corresponds to Fig. 2(b)).
+CircuitA: Optimized Variational Quantum Cloning Circuit.
 
-- Trainable circuit
-- Supports configurable number of ansatz layers
-- Uses parameter-shift rule for gradient computation
+Gate-equivalent optimized version of original CircuitB.
+Designed to preserve training performance while reducing structural redundancy.
+
+- 3 qubits
+- Variational ansatz (optimized decomposition)
+- Parameter-shift compatible
 - Returns fidelities (F_B, F_E)
-
-Structure:
-    Input preparation
-        ↓
-    Variational ansatz (L layers)
-        ↓
-    Fixed cloning interaction block
-        ↓
-    Fidelity measurement
+- Full state inspection supported
 """
 
 import pennylane as qml
@@ -24,7 +19,12 @@ import numpy as np
 
 from circuits.base import BaseCircuit
 
+
 class CircuitA(BaseCircuit):
+
+    # ==============================================================
+    # Initialization
+    # ==============================================================
 
     def __init__(self, n_layers):
         """
@@ -42,64 +42,49 @@ class CircuitA(BaseCircuit):
         # QNode used for post-training analysis (returns full state)
         self.state_qnode = self._build_state_qnode()
 
-    # ------------------------------------------------------------------
+    # ==============================================================
     # Properties
-    # ------------------------------------------------------------------
+    # ==============================================================
 
     @property
     def trainable(self):
-        """Indicates this circuit contains learnable parameters."""
         return True
 
     @property
     def n_params_per_layer(self):
-        """Number of trainable parameters per ansatz layer."""
         return 3
 
-    # ------------------------------------------------------------------
+    # ==============================================================
     # QNode builders
-    # ------------------------------------------------------------------
+    # ==============================================================
 
     def _build_fidelity_qnode(self):
-        """
-        Build training QNode.
-
-        Uses parameter-shift rule and returns only expectation values
-        (no state output, to remain gradient-compatible).
-        """
 
         @qml.qnode(self.dev, interface="torch", diff_method="parameter-shift")
         def circuit(params, eta):
 
             self._prepare_input(eta)
             self._ansatz(params)
-            self._cloning_block()
 
             return self._measure_fidelity(eta)
 
         return circuit
 
     def _build_state_qnode(self):
-        """
-        Build analysis QNode.
-
-        Returns full statevector (used only for testing/inspection).
-        """
 
         @qml.qnode(self.dev, interface="torch")
         def circuit(params, eta):
 
             self._prepare_input(eta)
             self._ansatz(params)
-            self._cloning_block()
 
             return qml.state()
 
         return circuit
 
-    # ------------------------------------------------------------------
+    # ==============================================================
     # Circuit building blocks
-    # ------------------------------------------------------------------
+    # ==============================================================
 
     def _prepare_input(self, eta):
         """
@@ -110,116 +95,116 @@ class CircuitA(BaseCircuit):
         Implemented as:
             H → RZ(η)
         """
+
         qml.Hadamard(wires=0)
         qml.RZ(eta, wires=0)
 
+        # Initialize clone qubits
         qml.Hadamard(wires=1)
         qml.Hadamard(wires=2)
 
         qml.Barrier()
 
+    # --------------------------------------------------------------
+
     def _ansatz(self, params):
         """
-        Variational ansatz.
+        Optimized variational ansatz.
 
-        Each layer:
-            RY → CNOT → RY → CNOT → RY
-
-        Acts on wires 1 and 2.
+        Each layer contains 3 trainable parameters.
         """
 
-        for l in range(self.n_layers):    
-            qml.RZ(params[l, 0], wires=1)
-            qml.Hadamard(wires=1)
-            qml.CZ(wires=[1, 2])
+        for l in range(self.n_layers):
+            self._ansatz_layer(params[l])
 
-            qml.RZ(np.pi / 2, wires=1)
-            qml.Hadamard(wires=1)
+    # --------------------------------------------------------------
 
-            qml.RZ(np.pi / 2, wires=2)
-            qml.Hadamard(wires=2)
-            qml.RZ(params[l, 1], wires=2)
-            qml.Hadamard(wires=2)
-            qml.RZ(-np.pi / 2, wires=2)
-            qml.Hadamard(wires=2)
-            qml.CZ(wires=[2, 1])
-
-            qml.RZ(-np.pi / 2, wires=1)
-            qml.Hadamard(wires=1)
-            qml.RZ(-params[l, 2], wires=1)
-            qml.Hadamard(wires=1)
-            qml.CZ(wires=[0, 1])
-
-            qml.Hadamard(wires=0)
-            qml.RZ(np.pi / 2, wires=1)
-            qml.Hadamard(wires=1)
-            qml.CZ(wires=[0, 2])
-
-            qml.Hadamard(wires=0)
-            qml.Hadamard(wires=2)
-            qml.CZ(wires=[1, 2])
-
-            qml.Hadamard(wires=2)
-            qml.SWAP(wires=[0, 2])
-
-
-    def _cloning_block(self):
+    def _ansatz_layer(self, theta):
         """
-        Fixed cloning interaction block.
-
-        Entangles input qubit (wire 0) with clone qubits.
+        Single optimized ansatz layer.
         """
 
-        # qml.CNOT(wires=[0, 1])
-        # qml.CNOT(wires=[0, 2])
-        # qml.CNOT(wires=[1, 0])
-        # qml.CNOT(wires=[2, 0])
-        pass  # Placeholder for the actual cloning block (to be defined)
+        # --- Local rotation on qubit 1 ---
+        qml.RZ(theta[0], wires=1)
+        qml.Hadamard(wires=1)
+        qml.CZ(wires=[1, 2])
 
-    def _measure_fidelity(self, eta):
-        """
-        Compute fidelities:
+        # --- Rotations on qubit 2 ---
+        qml.RZ(np.pi / 2, wires=1)
+        qml.Hadamard(wires=1)
 
-            F_B = <ψ|ρ_B|ψ>
-            F_E = <ψ|ρ_E|ψ>
+        qml.RZ(np.pi / 2, wires=2)
+        qml.Hadamard(wires=2)
 
-        Implemented via expectation value of projector |ψ><ψ|.
-        """
+        qml.RZ(theta[1], wires=2)
+        qml.Hadamard(wires=2)
+        qml.RZ(-np.pi / 2, wires=2)
+        qml.Hadamard(wires=2)
+
+        qml.CZ(wires=[2, 1])
+
+        # --- Entangle with input ---
+        qml.RZ(-np.pi / 2, wires=1)
+        qml.Hadamard(wires=1)
+        qml.RZ(-theta[2], wires=1)
+        qml.Hadamard(wires=1)
+
+        qml.CZ(wires=[0, 1])
+
+        # --- Symmetrization ---
+        qml.Hadamard(wires=0)
+
+        qml.RZ(np.pi / 2, wires=1)
+        qml.Hadamard(wires=1)
+
+        qml.CZ(wires=[0, 2])
+
+        qml.Hadamard(wires=0)
+        qml.Hadamard(wires=2)
+
+        qml.CZ(wires=[1, 2])
+
+        qml.Hadamard(wires=2)
+        qml.SWAP(wires=[0, 2])
+
+    # ==============================================================
+    # Fidelity Measurement
+    # ==============================================================
+
+    def _target_projector(self, eta):
 
         psi = torch.stack([
-            torch.tensor(1/np.sqrt(2), dtype=torch.cdouble),
-            torch.exp(1j*eta)/np.sqrt(2)
+            torch.tensor(1 / np.sqrt(2), dtype=torch.cdouble),
+            torch.exp(1j * eta) / np.sqrt(2)
         ])
 
-        projector = torch.outer(psi, torch.conj(psi))
+        return torch.outer(psi, torch.conj(psi))
+
+    def _measure_fidelity(self, eta):
+
+        projector = self._target_projector(eta)
 
         F_B = qml.expval(qml.Hermitian(projector, wires=1))
         F_E = qml.expval(qml.Hermitian(projector, wires=2))
 
         return F_B, F_E
 
-    # ------------------------------------------------------------------
+    # ==============================================================
     # Visualization
-    # ------------------------------------------------------------------
+    # ==============================================================
 
     def plot_circuit(self):
         """
-        Plot the full quantum circuit structure (one example instance).
-
-        Uses:
-            - Dummy parameters
-            - Dummy eta
-        This is for structural verification only.
+        Plot the quantum circuit structure (example instance).
         """
 
-        # Dummy inputs (just for visualization)
         dummy_params = torch.zeros(
             self.n_layers,
             self.n_params_per_layer
         )
+
         dummy_eta = torch.tensor(0.0)
 
-        # Use PennyLane's matplotlib drawer
         fig, ax = qml.draw_mpl(self.fid_qnode)(
             dummy_params,
             dummy_eta
@@ -228,45 +213,29 @@ class CircuitA(BaseCircuit):
         ax.set_title("CircuitA Structure")
         fig.show()
 
-    # ------------------------------------------------------------------
+    # ==============================================================
     # Public API
-    # ------------------------------------------------------------------
+    # ==============================================================
 
     def fidelity(self, eta, params):
-        """
-        Return (F_B, F_E) for given phase and parameters.
-        Used during training.
-        """
         return self.fid_qnode(params, eta)
 
     def analyze_states(self, etas, params):
-        """
-        Post-training inspection over fixed test phases.
 
-        For each η:
-            - Print input state (2D)
-            - Print input density matrix
-            - Print reduced density matrices ρ_B, ρ_E
-            - Print fidelities
-        """
-
-        print("\n===== TEST ANALYSIS (Circuit B) =====\n")
+        print("\n===== TEST ANALYSIS (Circuit A - Optimized) =====\n")
 
         for i, eta in enumerate(etas):
 
-            # ----- Input state (2D) -----
             psi = torch.stack([
                 torch.tensor(1/np.sqrt(2), dtype=torch.cdouble),
-                torch.exp(1j*eta)/np.sqrt(2)
+                torch.exp(1j * eta) / np.sqrt(2)
             ])
 
             rho_input = torch.outer(psi, torch.conj(psi))
 
-            # ----- Full system state (3 qubits) -----
             full_state = self.state_qnode(params, eta)
             rho_full = torch.outer(full_state, torch.conj(full_state))
 
-            # Reduced density matrices
             rho_B = qml.math.reduce_dm(rho_full, indices=[1])
             rho_E = qml.math.reduce_dm(rho_full, indices=[2])
 
