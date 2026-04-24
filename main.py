@@ -15,6 +15,7 @@ import argparse
 import torch
 import numpy as np
 
+from circuits.circuit_a import CircuitA
 from circuits.circuit_b import CircuitB
 from circuits.circuit_c import CircuitC
 from circuits.circuit_d import CircuitD
@@ -33,7 +34,7 @@ parser.add_argument(
     "--circuit",
     type=str,
     required=True,
-    choices=["B", "C", "D"],
+    choices=["A", "B", "C", "D"],
     help="Choose cloning circuit: B (variational), C, or D"
 )
 
@@ -58,7 +59,9 @@ dataset = PhaseCovariantDataset()
 # 3. Circuit selection
 # ------------------------------------------------------------
 
-if args.circuit == "B":
+if args.circuit == "A":
+    circuit = CircuitA(n_layers=args.layers)
+elif args.circuit == "B":
     circuit = CircuitB(n_layers=args.layers)
 elif args.circuit == "C":
     circuit = CircuitC()

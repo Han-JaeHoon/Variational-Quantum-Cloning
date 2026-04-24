@@ -1,7 +1,7 @@
 # circuits/circuit_b.py
 
 """
-CircuitB: Variational quantum cloning circuit (corresponds to Fig. 2(b)).
+CircuitA: Variational quantum cloning circuit (corresponds to Fig. 2(b)).
 
 - Trainable circuit
 - Supports configurable number of ansatz layers
@@ -24,7 +24,7 @@ import numpy as np
 
 from circuits.base import BaseCircuit
 
-class CircuitB(BaseCircuit):
+class CircuitA(BaseCircuit):
 
     def __init__(self, n_layers):
         """
@@ -113,6 +113,9 @@ class CircuitB(BaseCircuit):
         qml.Hadamard(wires=0)
         qml.RZ(eta, wires=0)
 
+        qml.Hadamard(wires=1)
+        qml.Hadamard(wires=2)
+
         qml.Barrier()
 
     def _ansatz(self, params):
@@ -125,15 +128,39 @@ class CircuitB(BaseCircuit):
         Acts on wires 1 and 2.
         """
 
-        for l in range(self.n_layers):
+        for l in range(self.n_layers):    
+            qml.RZ(params[l, 0], wires=1)
+            qml.Hadamard(wires=1)
+            qml.CZ(wires=[1, 2])
 
-            qml.RY(params[l, 0], wires=1)
-            qml.CNOT(wires=[1, 2])
+            qml.RZ(np.pi / 2, wires=1)
+            qml.Hadamard(wires=1)
 
-            qml.RY(params[l, 1], wires=2)
-            qml.CNOT(wires=[2, 1])
+            qml.RZ(np.pi / 2, wires=2)
+            qml.Hadamard(wires=2)
+            qml.RZ(params[l, 1], wires=2)
+            qml.Hadamard(wires=2)
+            qml.RZ(-np.pi / 2, wires=2)
+            qml.Hadamard(wires=2)
+            qml.CZ(wires=[2, 1])
 
-            qml.RY(params[l, 2], wires=1)
+            qml.RZ(-np.pi / 2, wires=1)
+            qml.Hadamard(wires=1)
+            qml.RZ(-params[l, 2], wires=1)
+            qml.Hadamard(wires=1)
+            qml.CZ(wires=[0, 1])
+
+            qml.Hadamard(wires=0)
+            qml.RZ(np.pi / 2, wires=1)
+            qml.Hadamard(wires=1)
+            qml.CZ(wires=[0, 2])
+
+            qml.Hadamard(wires=0)
+            qml.Hadamard(wires=2)
+            qml.CZ(wires=[1, 2])
+
+            qml.Hadamard(wires=2)
+            qml.SWAP(wires=[0, 2])
 
 
     def _cloning_block(self):
@@ -143,10 +170,11 @@ class CircuitB(BaseCircuit):
         Entangles input qubit (wire 0) with clone qubits.
         """
 
-        qml.CNOT(wires=[0, 1])
-        qml.CNOT(wires=[0, 2])
-        qml.CNOT(wires=[1, 0])
-        qml.CNOT(wires=[2, 0])
+        # qml.CNOT(wires=[0, 1])
+        # qml.CNOT(wires=[0, 2])
+        # qml.CNOT(wires=[1, 0])
+        # qml.CNOT(wires=[2, 0])
+        pass  # Placeholder for the actual cloning block (to be defined)
 
     def _measure_fidelity(self, eta):
         """
@@ -197,7 +225,7 @@ class CircuitB(BaseCircuit):
             dummy_eta
         )
 
-        ax.set_title("CircuitB Structure")
+        ax.set_title("CircuitA Structure")
         fig.show()
 
     # ------------------------------------------------------------------
