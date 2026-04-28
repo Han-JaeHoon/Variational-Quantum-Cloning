@@ -117,7 +117,7 @@ class CircuitA(BaseCircuit):
         qml.RZ(-np.pi / 2, wires=2)
         qml.Hadamard(wires=2)
 
-        qml.CZ(wires=[2, 1])
+        qml.CZ(wires=[2, 1]) # 생략해도 성능 유지됨
 
         # ----- Entangle with input -----
         qml.RZ(-np.pi / 2, wires=1)
