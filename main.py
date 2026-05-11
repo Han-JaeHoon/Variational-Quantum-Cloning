@@ -35,7 +35,7 @@ parser.add_argument(
     type=str,
     required=True,
     choices=["A", "B", "C", "D"],
-    help="Choose cloning circuit: B (variational), C, or D"
+    help="Choose cloning circuit: A, B (variational), C, or D"
 )
 
 parser.add_argument(

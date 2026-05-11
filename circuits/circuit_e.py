@@ -1,7 +1,8 @@
-# circuits/circuit_a.py
+# circuits/circuit_e.py
+# 기존 circuit A (14-qubit) 백업
 
 """
-CircuitA: Optimized Variational Quantum Cloning Circuit.
+CircuitE: Optimized Variational Quantum Cloning Circuit.
 
 Modifications from original:
 - Removed final Hadamard(wire=2)
@@ -19,7 +20,7 @@ import numpy as np
 from circuits.base import BaseCircuit
 
 
-class CircuitA(BaseCircuit):
+class CircuitE(BaseCircuit):
 
     # ==============================================================
     # Initialization
@@ -79,13 +80,13 @@ class CircuitA(BaseCircuit):
 
     def _prepare_input(self, eta):
 
-        # |ψ(η)> on wire 2
-        qml.Hadamard(wires=2)
-        qml.RZ(eta, wires=2)
+        # |ψ(η)> on wire 0
+        qml.Hadamard(wires=0)
+        qml.RZ(eta, wires=0)
 
         # Initialize blank clones
-        qml.Hadamard(wires=0)
         qml.Hadamard(wires=1)
+        qml.Hadamard(wires=2)
 
         qml.Barrier()
 
@@ -99,40 +100,50 @@ class CircuitA(BaseCircuit):
     # --------------------------------------------------------------
 
     def _ansatz_layer(self, theta):
-        qml.RZ(theta[1], wires=1)
+
+        # ----- Local rotation (wire 1) -----
+        qml.RZ(theta[0], wires=1)
         qml.Hadamard(wires=1)
+        qml.CZ(wires=[1, 2])
+
+        # ----- Rotations (wire 2) -----
+        qml.RZ(np.pi / 2, wires=1)
+        qml.Hadamard(wires=1)
+
+        qml.RZ(np.pi / 2, wires=2)
         qml.Hadamard(wires=2)
+
+        qml.RZ(theta[1], wires=2)
+        qml.Hadamard(wires=2)
+        qml.RZ(-np.pi / 2, wires=2)
+        qml.Hadamard(wires=2)
+
+        qml.CZ(wires=[2, 1]) # 생략해도 성능 유지됨
+
+        # ----- Entangle with input -----
+        qml.RZ(-np.pi / 2, wires=1)
+        qml.Hadamard(wires=1)
+        qml.RZ(-theta[2], wires=1)
+        qml.Hadamard(wires=1)
 
         qml.CZ(wires=[0, 1])
 
-        qml.RZ(-theta[0], wires=0)
+        # ----- Symmetrization block -----
         qml.Hadamard(wires=0)
 
         qml.RZ(np.pi / 2, wires=1)
         qml.Hadamard(wires=1)
 
         qml.CZ(wires=[0, 2])
-        qml.CZ(wires=[0, 1])
-        qml.Hadamard(wires=2)
-        qml.CZ(wires=[1, 2])
-
-        qml.RZ(theta[2], wires=1)
-        qml.Hadamard(wires=1)
-
-        qml.CZ(wires=[1, 2])
-        qml.CZ(wires=[0, 1])
-        qml.CZ(wires=[0, 2])
 
         qml.Hadamard(wires=0)
-        qml.CZ(wires=[0, 1])
+        qml.Hadamard(wires=2)
 
-        qml.Barrier()
+        qml.CZ(wires=[1, 2])
 
-        # qml.Hadamard(wires=0)
-        # qml.RZ(np.pi / 2, wires=1)
-        # qml.RZ(np.pi / 2, wires=2)
-        qml.S(wires=1)
-        qml.S(wires=2)
+        # ❌ Removed:
+        # qml.Hadamard(wires=2)
+        # qml.SWAP(wires=[0, 2])
 
     # ==============================================================
     # Fidelity measurement
@@ -154,7 +165,7 @@ class CircuitA(BaseCircuit):
         # 🔄 Clone E → wire 0
         # 🔄 Clone B → wire 1
         F_B = qml.expval(qml.Hermitian(projector, wires=1))
-        F_E = qml.expval(qml.Hermitian(projector, wires=2))
+        F_E = qml.expval(qml.Hermitian(projector, wires=0))
 
         return F_B, F_E
 
@@ -206,10 +217,10 @@ class CircuitA(BaseCircuit):
             full_state = self.state_qnode(params, eta)
             rho_full = torch.outer(full_state, torch.conj(full_state))
 
+            # 🔄 Clone E → wire 0
             # 🔄 Clone B → wire 1
-            # 🔄 Clone E → wire 2
+            rho_E = qml.math.reduce_dm(rho_full, indices=[0])
             rho_B = qml.math.reduce_dm(rho_full, indices=[1])
-            rho_E = qml.math.reduce_dm(rho_full, indices=[2])
 
             F_B, F_E = self.fidelity(eta, params)
 
